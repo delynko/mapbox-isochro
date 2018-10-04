@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "curl": "^0.1.4",
     "dotenv": "^6.0.0",
     "express": "^4.16.3",
     "hbs": "^4.0.1",

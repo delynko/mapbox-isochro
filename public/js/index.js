@@ -9,12 +9,18 @@ const mapboxStreets = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/
 });
 
 // create map
-var map = L.map("map", {
+const map = L.map("map", {
     maxZoom: 18,
     layers: [mapboxStreets],
     home: true
 }).setView([39.731910915528054, -105.2068591117859], 13);
 
+
 map.on('click', (e) => {
-    console.log(e);
-})
+    coords = `${e.latlng.lng},${e.latlng.lat}`;
+    socket.emit('map-coordinates', coords);
+});
+
+socket.on('isochrone-polys', (polys) => {
+    console.log(JSON.parse(polys));
+});

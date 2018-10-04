@@ -5,6 +5,7 @@ const path = require('path');
 const http = require('http');
 const socketIO = require('socket.io');
 const hbs = require('hbs');
+const curl = require('curl');
 
 const port = process.env.PORT || 3000;
 
@@ -28,6 +29,12 @@ app.get('/', (req, res) => {
 
 io.on('connection', (socket) => {
     console.log('connected');
+
+    socket.on('map-coordinates', (coords) => {
+        curl.get(`https://api.mapbox.com/isochrone/v1/mapbox/driving/${coords}?contours_minutes=5,10,15&contours_colors=6706ce,04e813,4286f4&polygons=true&access_token=${process.env.MAPBOX_API_KEY}`, "", (err, res, body) => {
+            socket.emit('isochrone-polys', body);
+        })
+    });
 
     socket.on('disconnect', () => {
         console.log('user disconnected');
