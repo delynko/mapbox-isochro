@@ -22,5 +22,9 @@ map.on('click', (e) => {
 });
 
 socket.on('isochrone-polys', (polys) => {
-    console.log(JSON.parse(polys));
+    L.geoJson(JSON.parse(polys), {
+        onEachFeature: function(feature, layer){
+            console.log(feature);
+        }
+    }).addTo(map);
 });
