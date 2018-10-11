@@ -27,7 +27,6 @@ const drawControl = new L.Control.Draw({
 map.addControl(drawControl);
 
 map.on(L.Draw.Event.CREATED, function (e) {
-    console.log(e);
     coords = `${e.layer._latlng.lng},${e.layer._latlng.lat}`;
     socket.emit('map-coordinates', coords);
 })
@@ -40,8 +39,9 @@ socket.on('isochrone-polys', (polys) => {
                 c == 10 ? {color: feature.properties.color, fillOpacity: feature.properties.fillOpacity, opacity: feature.properties.fillOpacity} :
                 {color: feature.properties.color, fillOpacity: feature.properties.fillOpacity, opacity: feature.properties.fillOpacity}
             },
-        onEachFeature: function(feature, layer){
-            console.log(feature);
-        }
     }).addTo(map);
 });
+
+socket.on('access-in-poly', (point) => {
+    L.geoJson(point).addTo(map);
+})
