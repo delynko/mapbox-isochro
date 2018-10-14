@@ -26,15 +26,28 @@ const drawControl = new L.Control.Draw({
 });
 map.addControl(drawControl);
 
+const modeIcon = L.icon({
+    iconUrl: '../img/mode-walk.png',
+    iconSize: [15, 25]
+});
+
+const thIcon = L.icon({
+    iconUrl: '../img/th-icon.png',
+    iconSize: [17, 23]
+})
+
 map.on(L.Draw.Event.CREATED, function (e) {
     coords = `${e.layer._latlng.lng},${e.layer._latlng.lat}`;
     socket.emit('map-coordinates', coords);
+    L.marker([e.layer._latlng.lat,e.layer._latlng.lng], {
+        icon: modeIcon
+    }).addTo(map);
 })
 
 socket.on('isochrone-polys', (polys) => {
     L.geoJson(JSON.parse(polys), {
         style: function(feature) {
-            c = feature.properties.contour
+            c = feature.properties.contour;
             return c == 5 ? {color: feature.properties.color, fillOpacity: feature.properties.fillOpacity, opacity: feature.properties.fillOpacity} :
                 c == 10 ? {color: feature.properties.color, fillOpacity: feature.properties.fillOpacity, opacity: feature.properties.fillOpacity} :
                 {color: feature.properties.color, fillOpacity: feature.properties.fillOpacity, opacity: feature.properties.fillOpacity}
@@ -43,5 +56,11 @@ socket.on('isochrone-polys', (polys) => {
 });
 
 socket.on('access-in-poly', (point) => {
-    L.geoJson(point).addTo(map);
+    L.geoJson(point, {
+        onEachFeature: function(feature, layer){
+            if (feature.properties.Feature_Ty == 'Trailhead'){
+                layer.setIcon(thIcon);
+            }
+        }
+    }).addTo(map);
 })
