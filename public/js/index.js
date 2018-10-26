@@ -1,66 +1,96 @@
 let socket = io();
 
-// mapbox streets tile layer
-const mapboxStreets = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-    attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
-    maxZoom: 18,
-    id: 'mapbox.dark',
-    accessToken: 'pk.eyJ1IjoiZGVseW5rbyIsImEiOiJjaXBwZ3hkeTUwM3VuZmxuY2Z5MmFqdnU2In0.ac8kWI1ValjdZBhlpMln3w'
+mapboxgl.accessToken = 'pk.eyJ1IjoiZGVseW5rbyIsImEiOiJjaXBwZ3hkeTUwM3VuZmxuY2Z5MmFqdnU2In0.ac8kWI1ValjdZBhlpMln3w';
+const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/delynko/cjh10hlxk045o2rn0vzayaxq9'
 });
 
-// create map
-const map = L.map("map", {
-    maxZoom: 18,
-    layers: [mapboxStreets],
-    home: true
-}).setView([39.731910915528054, -105.2068591117859], 13);
+const nav = new mapboxgl.NavigationControl();
+map.addControl(nav, 'top-left');
 
-const drawControl = new L.Control.Draw({
-    draw: {
-        // remove unnecessary buttons
-        rectangle: false,
-        polyline: false,
-        polygon: false,
-        circle: false
+map.addControl(new mapboxgl.GeolocateControl({
+    positionOptions: {
+        enableHighAccuracy: true
     },
-});
-map.addControl(drawControl);
+    trackUserLocation: true
+}));
 
-const modeIcon = L.icon({
-    iconUrl: '../img/mode-walk.png',
-    iconSize: [15, 25]
-});
+map.on('load', () => {
+    const draw = new MapboxDraw({
+        controls: {
+            line_string: false,
+            polygon: false,
+            trash: false,
+            combine_features: false,
+            uncombine_features: false
+        }
+    });
+    map.addControl(draw, 'top-left');
 
-const thIcon = L.icon({
-    iconUrl: '../img/th-icon.png',
-    iconSize: [17, 23]
-})
-
-map.on(L.Draw.Event.CREATED, function (e) {
-    coords = `${e.layer._latlng.lng},${e.layer._latlng.lat}`;
-    socket.emit('map-coordinates', coords);
-    L.marker([e.layer._latlng.lat,e.layer._latlng.lng], {
-        icon: modeIcon
-    }).addTo(map);
+    map.on('draw.create', (e) => {
+        let coords = `${e.features[0].geometry.coordinates[0]},${e.features[0].geometry.coordinates[1]}`;
+        let walkOrigin = document.createElement('div');
+        walkOrigin.className = 'walk-origin';
+        new mapboxgl.Marker(walkOrigin)
+            .setLngLat({lng: e.features[0].geometry.coordinates[0], lat: e.features[0].geometry.coordinates[1]})
+            .addTo(map);
+        socket.emit('map-coordinates', coords);
+    });
 })
 
 socket.on('isochrone-polys', (polys) => {
-    L.geoJson(JSON.parse(polys), {
-        style: function(feature) {
-            c = feature.properties.contour;
-            return c == 5 ? {color: feature.properties.color, fillOpacity: feature.properties.fillOpacity, opacity: feature.properties.fillOpacity} :
-                c == 10 ? {color: feature.properties.color, fillOpacity: feature.properties.fillOpacity, opacity: feature.properties.fillOpacity} :
-                {color: feature.properties.color, fillOpacity: feature.properties.fillOpacity, opacity: feature.properties.fillOpacity}
-            },
-    }).addTo(map);
+    console.log(JSON.parse(polys));
+    map.addSource('polygons', {
+        'type': 'geojson',
+        'data': JSON.parse(polys),
+    });
+
+    map.addLayer({
+        'id': '20-minute',
+        'type': 'fill',
+        'source': 'polygons',
+        'paint': {
+            'fill-color': JSON.parse(polys).features[0].properties.fillColor,
+            'fill-opacity': .6
+        },
+        'filter': ['==', 'contour', 20]
+    });
+
+    map.addLayer({
+        'id': '15-minute',
+        'type': 'fill',
+        'source': 'polygons',
+        'paint': {
+            'fill-color': JSON.parse(polys).features[1].properties.fillColor,
+            'fill-opacity': .6
+        },
+        'filter': ['==', 'contour', 15]
+    });
+
+    map.addLayer({
+        'id': '10-minute',
+        'type': 'fill',
+        'source': 'polygons',
+        'paint': {
+            'fill-color': JSON.parse(polys).features[2].properties.fillColor,
+            'fill-opacity': .6
+        },
+        'filter': ['==', 'contour', 10]
+    });
+
+    const coordinates = JSON.parse(polys).features[0].geometry.coordinates[0];
+    console.log(coordinates);
+
+    const bounds = coordinates.reduce(function(bounds, coord) {
+        return bounds.extend(coord);
+    }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+
+    map.fitBounds(bounds, {
+        padding: 20
+    });
 });
 
-socket.on('access-in-poly', (point) => {
-    L.geoJson(point, {
-        onEachFeature: function(feature, layer){
-            if (feature.properties.Feature_Ty == 'Trailhead'){
-                layer.setIcon(thIcon);
-            }
-        }
-    }).addTo(map);
+socket.on('access-in-poly', (points) => {
+    console.log(points)
 })
