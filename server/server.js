@@ -47,7 +47,6 @@ io.on('connection', (socket) => {
         curl.get(`https://api.mapbox.com/isochrone/v1/mapbox/walking/${coords}?contours_minutes=10,15,20&contours_colors=04e813,aaaa00,aa0000&polygons=true&access_token=${process.env.MAPBOX_API_KEY}`, "", (err, res, body) => {
             socket.emit('isochrone-polys', body);
             const polygons = JSON.parse(body);
-            console.log(polygons.features[0])
             const turfPoly = helpers.polygon([polygons.features[0].geometry.coordinates[0]]);
             pointData.features.map((f) => {
                 const pwip = inside(f, turfPoly)

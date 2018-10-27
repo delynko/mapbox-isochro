@@ -4,9 +4,34 @@ html, body, #map {
 }
 
 .walk-origin {
+    background-image: url('../img/mode-walk.png');
+    background-size: cover;
+    width: 20px;
+    height: 20px;
+    cursor: pointer
+}
+
+.trailhead-icon {
     background-image: url('../img/trailhead.png');
     background-size: cover;
     width: 20px;
     height: 20px;
     cursor: pointer
 }
+
+.parking-lot-icon {
+    background-image: url('../img/parking.png');
+    background-size: cover;
+    width: 20px;
+    height: 20px;
+    cursor: pointer
+}
+
+.mapboxgl-popup {
+    max-width: 200px
+}
+
+.mapboxgl-popup-content {
+    text-align: center;
+    font-family: 'Source Sans Pro', sans-serif;
+  }

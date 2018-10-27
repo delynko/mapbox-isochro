@@ -40,7 +40,6 @@ map.on('load', () => {
 })
 
 socket.on('isochrone-polys', (polys) => {
-    console.log(JSON.parse(polys));
     map.addSource('polygons', {
         'type': 'geojson',
         'data': JSON.parse(polys),
@@ -52,7 +51,7 @@ socket.on('isochrone-polys', (polys) => {
         'source': 'polygons',
         'paint': {
             'fill-color': JSON.parse(polys).features[0].properties.fillColor,
-            'fill-opacity': .6
+            'fill-opacity': .3
         },
         'filter': ['==', 'contour', 20]
     });
@@ -63,7 +62,7 @@ socket.on('isochrone-polys', (polys) => {
         'source': 'polygons',
         'paint': {
             'fill-color': JSON.parse(polys).features[1].properties.fillColor,
-            'fill-opacity': .6
+            'fill-opacity': .3
         },
         'filter': ['==', 'contour', 15]
     });
@@ -74,13 +73,12 @@ socket.on('isochrone-polys', (polys) => {
         'source': 'polygons',
         'paint': {
             'fill-color': JSON.parse(polys).features[2].properties.fillColor,
-            'fill-opacity': .6
+            'fill-opacity': .5
         },
         'filter': ['==', 'contour', 10]
     });
 
     const coordinates = JSON.parse(polys).features[0].geometry.coordinates[0];
-    console.log(coordinates);
 
     const bounds = coordinates.reduce(function(bounds, coord) {
         return bounds.extend(coord);
@@ -91,6 +89,24 @@ socket.on('isochrone-polys', (polys) => {
     });
 });
 
-socket.on('access-in-poly', (points) => {
-    console.log(points)
+socket.on('access-in-poly', (point) => {
+    let fType;
+    switch(point.properties.Feature_Ty){
+        case 'Parking Lot':
+            fType = 'parking-lot'
+            break;
+        case 'Access Point':
+            fType = 'trailhead'
+            break;
+        case 'Trailhead':
+            fType = 'trailhead'
+            break;
+    }
+    
+    let iconFType = document.createElement('div');
+    iconFType.className = fType + '-icon';
+    new mapboxgl.Marker(iconFType)
+        .setLngLat({lng: point.geometry.coordinates[0], lat: point.geometry.coordinates[1]})
+        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<p>${point.properties.Park_Name}</p>`))
+        .addTo(map);
 })
