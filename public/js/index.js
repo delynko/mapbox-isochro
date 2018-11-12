@@ -3,7 +3,9 @@ let socket = io();
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGVseW5rbyIsImEiOiJjaXBwZ3hkeTUwM3VuZmxuY2Z5MmFqdnU2In0.ac8kWI1ValjdZBhlpMln3w';
 const map = new mapboxgl.Map({
     container: 'map',
-    style: 'mapbox://styles/delynko/cjh10hlxk045o2rn0vzayaxq9'
+    style: 'mapbox://styles/delynko/cjh10hlxk045o2rn0vzayaxq9',
+    center: [-105.20832678312672,39.72951616726479],
+    zoom: 13
 });
 
 const nav = new mapboxgl.NavigationControl();
@@ -15,6 +17,10 @@ map.addControl(new mapboxgl.GeolocateControl({
     },
     trackUserLocation: true
 }));
+
+map.on('click', (c) => {
+    console.log(c);
+})
 
 map.on('load', () => {
     const draw = new MapboxDraw({
@@ -46,36 +52,25 @@ socket.on('isochrone-polys', (polys) => {
     });
 
     map.addLayer({
-        'id': '20-minute',
+        'id': '10-minute',
         'type': 'fill',
         'source': 'polygons',
         'paint': {
             'fill-color': JSON.parse(polys).features[0].properties.fillColor,
             'fill-opacity': .3
         },
-        'filter': ['==', 'contour', 20]
+        'filter': ['==', 'contour', 10]
     });
 
     map.addLayer({
-        'id': '15-minute',
+        'id': '5-minute',
         'type': 'fill',
         'source': 'polygons',
         'paint': {
             'fill-color': JSON.parse(polys).features[1].properties.fillColor,
             'fill-opacity': .3
         },
-        'filter': ['==', 'contour', 15]
-    });
-
-    map.addLayer({
-        'id': '10-minute',
-        'type': 'fill',
-        'source': 'polygons',
-        'paint': {
-            'fill-color': JSON.parse(polys).features[2].properties.fillColor,
-            'fill-opacity': .5
-        },
-        'filter': ['==', 'contour', 10]
+        'filter': ['==', 'contour', 5]
     });
 
     const coordinates = JSON.parse(polys).features[0].geometry.coordinates[0];
@@ -90,6 +85,7 @@ socket.on('isochrone-polys', (polys) => {
 });
 
 socket.on('access-in-poly', (point) => {
+    console.log(point);
     let fType;
     switch(point.properties.Feature_Ty){
         case 'Parking Lot':
@@ -109,4 +105,8 @@ socket.on('access-in-poly', (point) => {
         .setLngLat({lng: point.geometry.coordinates[0], lat: point.geometry.coordinates[1]})
         .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<p>${point.properties.Park_Name}</p>`))
         .addTo(map);
+    
+    $('#info-container').append(
+        `<div className="access">${point.properties.Park_Name}</div>`
+    );
 })

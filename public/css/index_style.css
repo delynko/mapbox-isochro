@@ -1,6 +1,24 @@
-html, body, #map {
+html, body {
     height: 100%;
     margin: 0
+}
+
+#main-container {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    display: flex;
+}
+
+#map {
+    height: 100%;
+    flex: 0 0 75%;
+    margin: 0
+}
+
+#info-container {
+    margin-left: 5px;
+    width: 1;
 }
 
 .walk-origin {
